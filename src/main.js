@@ -2,7 +2,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 import 'bootstrap/dist/css/bootstrap.min.css';
  
-import model_path from './assets/model.glb'
+import model_path from './assets/toys.glb'
 
 const canvas = document.querySelector('#c');
 const renderer = new THREE.WebGLRenderer({antialias: true, canvas}); // This calls what we pass requestAnimationFrame
