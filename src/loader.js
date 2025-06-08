@@ -8,4 +8,3 @@ export default function loadModel() {
   return loader.loadAsync(model_path)
     .then(gltf => gltf.scene);
 }
-

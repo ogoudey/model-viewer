@@ -39,13 +39,14 @@ let hovered = "";
 ///////////////////
 let model = null;
 let rotate_active = true;
+let inventory = null;
 
 /////////////////////
 // Load model     //
 ///////////////////
 
 // load then conform
-loadModel()
+await loadModel()
   .then(modelScene => {
     scene.add(modelScene);
     model = modelScene;
@@ -56,9 +57,9 @@ loadModel()
   })
   .catch(console.error);
 
-/////////////////////
-// major helpers  //
 ///////////////////
+// Class helpers//
+/////////////////
 
 class PickHelper {
     constructor() {
@@ -82,6 +83,64 @@ class PickHelper {
     }
 }
 
+/////////////////////
+// Initializing   //
+///////////////////
+
+const pickHelper = new PickHelper();
+
+const pickPosition = {x: 0, y: 0};
+clearPickPosition();
+
+await loadData()
+  .then(data => {
+    // data.inventory is your array of daily snapshots
+    inventory = data["inventory"]["items"];
+    // → now pass it into your Three.js rendering logic…
+  })
+  .catch(err => console.error('Failed to load JSON', err));
+
+inventory.forEach((item) => {
+  const original = scene.getObjectByName(item.geometry);
+  if (!original) {
+    console.warn(`No mesh named "${item.geometry}" found`);
+    return;
+  }
+
+  const count = item.count;
+  for (let i = 0; i < count; i++) {
+    let worldPos = new THREE.Vector3();
+    let worldQuat = new THREE.Quaternion();
+    let worldScale = new THREE.Vector3(1,1,1);
+    const spawnPoint = scene.getObjectByName(item.spawn);
+     if (spawnPoint) {
+      // Ensure world matrices are up to date
+      spawnPoint.updateMatrixWorld(true);
+      spawnPoint.getWorldPosition(worldPos);
+      spawnPoint.getWorldQuaternion(worldQuat);
+      spawnPoint.getWorldScale(worldScale);
+    } else {
+      console.warn('No spawn point named "${item.spawn}" found; defaulting to origin');
+    }
+    worldPos.y += i * 0.051; // REPLACE WITH FUNCTION LOOKUP
+    
+    const clone = original.clone(true);
+    const localPos = model.worldToLocal(worldPos.clone());
+    clone.position.copy(localPos);
+    clone.quaternion.copy(worldQuat);
+    clone.scale.copy(worldScale);
+    model.add(clone);
+  }
+
+  // now that we've made all the clones, remove the original
+  original.removeFromParent();
+});
+
+
+
+/////////////////////
+// major helpers  //
+///////////////////
 
 function inspect() {
     if (choice) {
@@ -100,7 +159,8 @@ function inspect() {
         tag.children[0].innerText = choiceObject.name;
         
         const count = document.getElementById('count');
-        let num = 2;
+        const record = inventory.find(item => item.geometry === choiceObject.name);
+        const num = record ? record.count : 0;
         count.innerText = num.toString();
     } else {
         const tag = document.getElementById('inspector');
@@ -108,26 +168,7 @@ function inspect() {
     }     
 }
 
-
-
-
-/////////////////////
-// Initializing   //
-///////////////////
-
-const pickHelper = new PickHelper();
-
-const pickPosition = {x: 0, y: 0};
-clearPickPosition();
-
-loadData()
-  .then(data => {
-    // data.inventory is your array of daily snapshots
-    console.log('got JSON:', data);
-    // → now pass it into your Three.js rendering logic…
-  })
-  .catch(err => console.error('Failed to load JSON', err));
-
+printAllMeshes(scene);
 
 requestAnimationFrame(render); // Point WebGL to render() below
 
@@ -145,7 +186,7 @@ function render(time) {
     }    
     
     if (model && rotate_active) {
-        //model.rotation.y = time * 0.1;
+        model.rotation.y = time * 0.1;
     }
     
     hovered = pickHelper.pick(pickPosition, scene, camera);
@@ -163,6 +204,17 @@ function render(time) {
 ///////////////////////
 // Helper functions //
 /////////////////////
+
+function printAllMeshes(root) {
+  const meshes = [];
+  root.traverse(obj => {
+    if (obj.isMesh) meshes.push(obj);
+  });
+  meshes.forEach((m, i) => {
+    console.log(`${i}: name="${m.name}"`, m);
+  });
+  return meshes;
+}
 
 async function loadData() {
   const res = await fetch('/inv.json');
