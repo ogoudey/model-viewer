@@ -152,16 +152,19 @@ function inspect() {
 
         const tag = document.getElementById('inspector');
         tag.style.visibility="visible";
-
+        
+        /// Inspector Styling ///
         tag.style.left = `${x}px`;
         tag.style.top  = `${y - 30}px`;
         
-        tag.children[0].innerText = choiceObject.name;
+        const record1 = inventory.find(item => item.geometry === choiceObject.name);
+        tag.children[0].innerText = record1 ? record1.name : "";;
         
         const count = document.getElementById('count');
         const record = inventory.find(item => item.geometry === choiceObject.name);
-        const num = record ? record.count : 0;
+        const num = record ? record.count : "";
         count.innerText = num.toString();
+        ///
     } else {
         const tag = document.getElementById('inspector');
         tag.style.visibility="hidden";
