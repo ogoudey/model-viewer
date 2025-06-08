@@ -13,11 +13,19 @@
       color: white;
       font-family: sans-serif;
     }
+    #inspector {
+      position: absolute;              
+      transform: translate(-50%, -100%);
+      pointer-events: auto;            /* allow clicking */
+      font-family: sans-serif;
+      visibility: hidden;
+    }
   </style>
 </head>
 <body class="position-relative overflow-hidden">
   <canvas id="c" class="w-100 vh-100"></canvas>
 
+  <!-- Centered badges -->
   <div
     class="position-absolute top-0 start-0 w-100 mt-3
            d-flex flex-column align-items-center gap-2
@@ -29,6 +37,40 @@
     <span id="hover-part" class="badge bg-transparent text-white fs-5">
       Hover: none
     </span>
+  </div>
+
+  <!-- Top-Left -->
+  <div class="position-absolute top-0 start-0 m-3">
+    <button id="tl-button" class="btn btn-success">
+      Top-Left Action
+    </button>
+  </div>
+
+  <!-- Top-Right -->
+  <div class="position-absolute top-0 end-0 m-3">
+    <span id="tr-badge" class="badge bg-warning text-dark fs-6">
+      Top-Right Status
+    </span>
+  </div>
+
+  <!-- Bottom-Left -->
+  <div class="position-absolute bottom-0 start-0 m-3">
+    <button id="bl-button" class="btn btn-info">
+      Bottom-Left Action
+    </button>
+  </div>
+
+  <!-- Bottom-Right -->
+  <div class="position-absolute bottom-0 end-0 m-3">
+    <span id="br-badge" class="badge bg-danger text-white fs-6">
+      Bottom-Right Status
+    </span>
+  </div>
+  
+  <div id="inspector">
+    <h3></h3>
+    <div><span>Count: </span><span id="count"></span></div>
+    
   </div>
 
   <script type="module" src="/src/main.js"></script>
