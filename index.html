@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>My App</title>
+  <style>
+    body,html { margin:0; overflow:hidden; }
+    canvas     { display:block; width:100%; height:100%; }
+    .position-absolute {
+      position: absolute;
+      z-index: 10;
+      pointer-events: auto; /* allow clicking buttons, etc. */
+      color: white;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body class="position-relative overflow-hidden">
+  <canvas id="c" class="w-100 vh-100"></canvas>
+
+  <div
+    class="position-absolute top-0 start-0 w-100 mt-3
+           d-flex flex-column align-items-center gap-2
+           pointer-events-auto"
+  >
+    <span id="chosen-part" class="badge bg-primary text-white fs-5">
+      Chosen: none
+    </span>
+    <span id="hover-part" class="badge bg-transparent text-white fs-5">
+      Hover: none
+    </span>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
