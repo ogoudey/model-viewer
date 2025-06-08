@@ -1,19 +1,19 @@
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 import 'bootstrap/dist/css/bootstrap.min.css';
  
-import model_path from './assets/toys.glb'
+import loadModel  from './loader.js';
+
 
 const canvas = document.querySelector('#c');
 const renderer = new THREE.WebGLRenderer({antialias: true, canvas}); // This calls what we pass requestAnimationFrame
-const fov = 50;
+const fov = 90;
 const aspect = 2;  // the canvas default
 const near = 0.01;
 const far = 200;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-camera.position.z = 15;
-camera.position.y = 15;
-camera.rotation.x = Math.PI/-4;
+camera.position.z = 1.25;
+camera.position.y = 1;
+camera.rotation.x = - Math.PI/5;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('gray');
@@ -24,7 +24,8 @@ const color = 0xFFFFFF;
 const intensity = 5;
 const light = new THREE.DirectionalLight(color, intensity);
 light.position.set(-1, 2, 4);
-scene.add(light);
+//scene.add(light);
+camera.add(light);
 
 
 /////////////////////
@@ -42,16 +43,22 @@ let rotate_active = true;
 /////////////////////
 // Load model     //
 ///////////////////
-const loader = new GLTFLoader();
-loader.load(
-    model_path,
-    (gltf) => {
-        scene.add( gltf.scene );
-        model = gltf.scene
-    },
-    undefined,
-    (error) => {console.error( error );}
-);
+
+// load then conform
+loadModel()
+  .then(modelScene => {
+    scene.add(modelScene);
+    model = modelScene;
+    
+    // safe to rotate now!
+    model.rotation.y = -3/4 * Math.PI;
+    
+  })
+  .catch(console.error);
+
+/////////////////////
+// major helpers  //
+///////////////////
 
 class PickHelper {
     constructor() {
@@ -101,6 +108,9 @@ function inspect() {
     }     
 }
 
+
+
+
 /////////////////////
 // Initializing   //
 ///////////////////
@@ -109,6 +119,15 @@ const pickHelper = new PickHelper();
 
 const pickPosition = {x: 0, y: 0};
 clearPickPosition();
+
+loadData()
+  .then(data => {
+    // data.inventory is your array of daily snapshots
+    console.log('got JSON:', data);
+    // → now pass it into your Three.js rendering logic…
+  })
+  .catch(err => console.error('Failed to load JSON', err));
+
 
 requestAnimationFrame(render); // Point WebGL to render() below
 
@@ -126,7 +145,7 @@ function render(time) {
     }    
     
     if (model && rotate_active) {
-        model.rotation.y = time * 0.1;
+        //model.rotation.y = time * 0.1;
     }
     
     hovered = pickHelper.pick(pickPosition, scene, camera);
@@ -145,9 +164,16 @@ function render(time) {
 // Helper functions //
 /////////////////////
 
+async function loadData() {
+  const res = await fetch('/inv.json');
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 // -------click
 function choose(event) {
     choice = pickHelper.pick(pickPosition, scene, camera);
+    console.log(choice);
 }
 
 function worldToCanvasPos(worldPos, camera, canvas) {

@@ -1,0 +1,30 @@
+{
+    "inventory":
+        {"items":
+            [
+                {
+                    "name": "3D_square",
+                    "spawn": "Spawn 3D Square",
+                    "count": 4
+                },
+                {
+                    "name": "Cube",
+                    "geometry": "Cube",
+                    "spawn": "Spawn Cube",
+                    "count": 2
+                },
+                {
+                    "name": "Cylinder",
+                    "geometry": "Cylinder1",
+                    "spawn": "Spawn Cylinder",
+                    "count": 1
+                },
+                {
+                    "name": "Cylinder2",
+                    "geometry": "Cylinder",
+                    "spawn": "Spawn Cylinder",
+                    "count": 1
+                }
+            ]
+        }
+}
