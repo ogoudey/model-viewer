@@ -6,19 +6,23 @@ import loadModel  from './loader.js';
 
 const canvas = document.querySelector('#c');
 const renderer = new THREE.WebGLRenderer({antialias: true, canvas}); // This calls what we pass requestAnimationFrame
-const fov = 90;
+const fov = 50;
 const aspect = 2;  // the canvas default
 const near = 0.01;
 const far = 200;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-camera.position.z = 1.25;
-camera.position.y = 1;
-camera.rotation.x = - Math.PI/5;
+camera.position.z = 0;
+camera.position.x = 0;
+camera.position.y = 0;
+camera.rotation.x = 0;
+camera.rotation.y = 0.0;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('gray');
 scene.updateMatrixWorld(true);
-scene.add(camera);
+
+
+
 
 const color = 0xFFFFFF;
 const intensity = 5;
@@ -40,22 +44,25 @@ let hovered = "";
 let model = null;
 let rotate_active = true;
 let inventory = null;
-
+let tick = 0
 /////////////////////
 // Load model     //
 ///////////////////
 
-// load then conform
+// load then conform it to JSON
 await loadModel()
   .then(modelScene => {
     scene.add(modelScene);
     model = modelScene;
     
     // safe to rotate now!
-    model.rotation.y = -3/4 * Math.PI;
+    model.rotation.y = 0.0;
     
   })
   .catch(console.error);
+
+moveCameraToPoint("camera_point_barista");
+
 
 ///////////////////
 // Class helpers//
@@ -100,47 +107,53 @@ await loadData()
   })
   .catch(err => console.error('Failed to load JSON', err));
 
-inventory.forEach((item) => {
-  const original = scene.getObjectByName(item.geometry);
-  if (!original) {
-    console.warn(`No mesh named "${item.geometry}" found`);
-    return;
-  }
+printAllMeshes(scene);
+// Inventory
 
-  const count = item.count;
-  for (let i = 0; i < count; i++) {
-    let worldPos = new THREE.Vector3();
-    let worldQuat = new THREE.Quaternion();
-    let worldScale = new THREE.Vector3(1,1,1);
-    const spawnPoint = scene.getObjectByName(item.spawn);
-     if (spawnPoint) {
-      // Ensure world matrices are up to date
-      spawnPoint.updateMatrixWorld(true);
-      spawnPoint.getWorldPosition(worldPos);
-      spawnPoint.getWorldQuaternion(worldQuat);
-      spawnPoint.getWorldScale(worldScale);
-    } else {
-      console.warn('No spawn point named "${item.spawn}" found; defaulting to origin');
-    }
-    worldPos.y += i * 0.051; // REPLACE WITH FUNCTION LOOKUP
-    
-    const clone = original.clone(true);
-    const localPos = model.worldToLocal(worldPos.clone());
-    clone.position.copy(localPos);
-    clone.quaternion.copy(worldQuat);
-    clone.scale.copy(worldScale);
-    model.add(clone);
-  }
-
-  // now that we've made all the clones, remove the original
-  original.removeFromParent();
-});
-
-
+arrange()
 
 /////////////////////
 // major helpers  //
 ///////////////////
+
+function arrange() {
+    console.log("Arranging...");
+    inventory.forEach((item) => {
+      const original = scene.getObjectByName(item.geometry);
+      if (!original) {
+        console.warn(`No mesh named "${item.geometry}" found`);
+        return;
+      }
+
+      const count = item.count;
+      for (let i = 0; i < count; i++) {
+        let worldPos = new THREE.Vector3();
+        let worldQuat = new THREE.Quaternion();
+        let worldScale = new THREE.Vector3(1,1,1);
+        const spawnPoint = scene.getObjectByName(item.spawn);
+         if (spawnPoint) {
+          // Ensure world matrices are up to date
+          spawnPoint.updateMatrixWorld(true);
+          spawnPoint.getWorldPosition(worldPos);
+          spawnPoint.getWorldQuaternion(worldQuat);
+          spawnPoint.getWorldScale(worldScale);
+        } else {
+          console.warn('No spawn point named "${item.spawn}" found; defaulting to origin');
+        }
+        worldPos.y += i * 0.051; // REPLACE WITH FUNCTION LOOKUP BY ITEM
+        
+        const clone = original.clone(true);
+        const localPos = model.worldToLocal(worldPos.clone());
+        clone.position.copy(localPos);
+        clone.quaternion.copy(worldQuat);
+        clone.scale.copy(worldScale);
+        model.add(clone);
+      }
+
+      // now that we've made all the clones, remove the original
+      original.removeFromParent();
+    });
+}
 
 function inspect() {
     if (choice) {
@@ -180,6 +193,7 @@ requestAnimationFrame(render); // Point WebGL to render() below
 ////////////////////
 
 function render(time) {
+    tick += 1;
     time *= 0.001;  // convert time to seconds
     
     if (resizeRendererToDisplaySize(renderer)) {
@@ -188,8 +202,20 @@ function render(time) {
         camera.updateProjectionMatrix();
     }    
     
+    // Lazy stream
+    if (tick % 1000 === 0) {
+        loadData()
+          .then(data => {
+            inventory = data["inventory"]["items"];
+          })
+          .catch(err => console.error('Failed to load JSON', err));
+        arrange();
+    }
+    // end lazy steam
+    
     if (model && rotate_active) {
-        model.rotation.y = time * 0.1;
+        //model.rotation.y = time * 0.01;
+        camera.rotation.y = time * 0.1;
     }
     
     hovered = pickHelper.pick(pickPosition, scene, camera);
@@ -207,6 +233,22 @@ function render(time) {
 ///////////////////////
 // Helper functions //
 /////////////////////
+
+function moveCameraToPoint(pointName) {
+  const newCameraPoint = scene.getObjectByName(pointName);
+  if (!newCameraPoint) {
+    console.warn(`Camera point '${pointName}' not found.`);
+    return;
+  }
+
+  // Remove camera from current parent
+  if (camera.parent) {
+    camera.parent.remove(camera);
+  }
+
+  // Add camera to the new point
+  newCameraPoint.add(camera);
+}
 
 function printAllMeshes(root) {
   const meshes = [];
@@ -235,10 +277,10 @@ function worldToCanvasPos(worldPos, camera, canvas) {
   // Clone so we don't overwrite the original
   const pos = worldPos.clone();
 
-  // 1) Project into NDC space (x,y ∈ [-1,1])
+  // Project into NDC space (x,y ∈ [-1,1])
   pos.project(camera);
    
-  // 2) Convert to pixels
+  // Convert to pixels
   const halfW = canvas.clientWidth  / 2;
   const halfH = canvas.clientHeight / 2;
 
@@ -313,5 +355,24 @@ function handleBottomLeftClick(event) {
 }
 
 blButton.addEventListener('click', handleBottomLeftClick);
+
+// Dropdown buttons
+const tlAction1 = document.getElementById('tl-action-1');
+const tlAction2 = document.getElementById('tl-action-2');
+
+function handleTopLeftAction1Click(event) {
+  console.log('Top-left Action 1 clicked!', event);
+  moveCameraToPoint("camera_point_barista");
+  
+}
+
+function handleTopLeftAction2Click(event) {
+  console.log('Top-left Action 2 clicked!', event);
+  moveCameraToPoint("camera_point_scooper");
+}
+
+tlAction1.addEventListener('click', handleTopLeftAction1Click);
+tlAction2.addEventListener('click', handleTopLeftAction2Click);
+
 
 

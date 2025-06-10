@@ -3,28 +3,10 @@
         {"items":
             [
                 {
-                    "name": "3D Square",
-                    "geometry": "3D_Square",
-                    "spawn": "Spawn_3D_Square",
-                    "count": 10
-                },
-                {
-                    "name": "Cube",
-                    "geometry": "Cube",
-                    "spawn": "Spawn_Cube",
-                    "count": 10
-                },
-                {
-                    "name": "Cylinder",
-                    "geometry": "Cylinder1",
-                    "spawn": "Spawn_Cylinder",
-                    "count": 10
-                },
-                {
-                    "name": "Cylinder",
-                    "geometry": "Cylinder2",
-                    "spawn": "Spawn_Cylinder",
-                    "count": 10
+                    "name": "Cup",
+                    "geometry": "Cup",
+                    "spawn": "spawn_point_cup",
+                    "count": 5
                 }
             ]
         }
