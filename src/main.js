@@ -374,5 +374,16 @@ function handleTopLeftAction2Click(event) {
 tlAction1.addEventListener('click', handleTopLeftAction1Click);
 tlAction2.addEventListener('click', handleTopLeftAction2Click);
 
+const gazeboButton = document.getElementById('gazebo-button');
+
+gazeboButton.addEventListener('click', async () => {
+  console.log('Simulate with Gazebo clicked!');
+  
+  // Example: Export scene and generate SDF
+
+
+  // Placeholder action:
+  alert('Scene would now be exported for Gazebo simulation.');
+});
 
 
